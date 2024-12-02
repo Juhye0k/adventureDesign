@@ -104,6 +104,11 @@
             background-color: #f1f3f5;
             transition: background-color 0.3s ease;
         }
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +119,7 @@
     </div>
 
     <div class="row">
+        <!-- 이메일 세부 정보 -->
         <div class="col-md-5">
             <div class="card">
                 <div class="card-body">
@@ -148,10 +154,16 @@
             </div>
         </div>
 
+        <!-- 분석 결과 -->
         <div class="col-md-7">
             <div class="card mb-4">
                 <div class="card-body">
-                    <h4 class="card-title">분석 결과</h4>
+                    <h4 class="card-title d-flex justify-content-between align-items-center">
+                        분석 결과
+                        <form th:action="@{/clearAnalysis}" method="post">
+                            <button type="submit" class="btn btn-danger">분석 결과 삭제</button>
+                        </form>
+                    </h4>
                     <table class="table">
                         <thead>
                         <tr>
@@ -177,12 +189,23 @@
                 </div>
             </div>
 
+            <!-- 스팸 이메일 목록 -->
             <div class="card mb-4">
                 <div class="card-body">
                     <h4 class="card-title d-flex justify-content-between align-items-center">
                         스팸 이메일 목록
-                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addSpamModal">스팸 이메일 추가</button>
+                        <div>
+                            <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addSpamModal">스팸 이메일 추가</button>
+                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#removeSpamModal">스팸 이메일 삭제</button>
+                        </div>
                     </h4>
+
+                    <!-- 검색 필드 추가 -->
+                    <form th:action="@{/searchSpam}" method="get" class="d-flex mb-3">
+                        <input type="text" class="form-control me-2" name="keyword" placeholder="도메인 검색..." value="" />
+                        <button type="submit" class="btn btn-outline-primary">검색</button>
+                    </form>
+
                     <table class="table">
                         <thead class="table-danger">
                         <tr>
@@ -191,10 +214,31 @@
                         </thead>
                         <tbody>
                         <tr th:each="spam : ${hashSet}">
-                            <td th:text="${spam}">보낸 사람</td>
+                            <td th:text="${spam}">도메인 예시</td>
                         </tr>
                         </tbody>
                     </table>
+
+                    <!-- 페이지네이션 -->
+                    <div class="pagination-wrapper">
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${page == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{|/analyze?page=${page - 1}|}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item"
+                                th:each="i : ${#numbers.sequence(page - (page > totalPages - 3 ? 4 : 2) < 0 ? 0 : page - 2, page + (page < 2 ? 4 : 2) > totalPages - 1 ? totalPages - 1 : page + 2)}"
+                                th:classappend="${i == page} ? 'active'">
+                                <a class="page-link" th:href="@{|/analyze?page=${i}|}" th:text="${i + 1}">1</a>
+                            </li>
+                            <li class="page-item" th:classappend="${page == totalPages - 1} ? 'disabled'">
+                                <a class="page-link" th:href="@{|/analyze?page=${page + 1}|}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -212,10 +256,31 @@
             <div class="modal-body">
                 <form th:action="@{/addDomain}" method="post">
                     <div class="mb-3">
-                        <label for="domain" class="form-label">도메인</label>
-                        <input type="text" class="form-control" id="domain" name="domain" placeholder="예: spamdomain.com" required>
+                        <label for="addDomain" class="form-label">도메인</label>
+                        <input type="text" class="form-control" id="addDomain" name="domain" placeholder="예: spamdomain.com" required>
                     </div>
-                    <button type="submit" class="btn btn-danger w-100">도메인 추가</button>
+                    <button type="submit" class="btn btn-primary w-100">도메인 추가</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for removing spam email domain -->
+<div class="modal fade" id="removeSpamModal" tabindex="-1" aria-labelledby="removeSpamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeSpamModalLabel">스팸 이메일 도메인 삭제</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/removeDomain}" method="post">
+                    <div class="mb-3">
+                        <label for="removeDomain" class="form-label">도메인</label>
+                        <input type="text" class="form-control" id="removeDomain" name="domain" placeholder="예: spamdomain.com" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">도메인 삭제</button>
                 </form>
             </div>
         </div>
